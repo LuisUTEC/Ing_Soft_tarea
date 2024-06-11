@@ -47,7 +47,7 @@ class MockCoordinateService(ICoordinateService):
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371.0  # Radio de la Tierra en kilómetros
     dlat = math.radians(lat2 - lat1)
-    dlon = math.radians(lon2 - lon1)
+    dlon = math.radians(lat2 - lon1)
     a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     distance = R * c
@@ -63,6 +63,28 @@ class DistanceCalculator:
         if not coords1 or not coords2:
             return None
         return haversine(coords1.latitud, coords1.longitud, coords2.latitud, coords2.longitud)
+
+def obtener_ciudades():
+    ciudades = []
+    for i in range(3):
+        nombre_ciudad = input(f"Ingrese el nombre de la ciudad {i + 1}: ")
+        nombre_pais = input(f"Ingrese el país de la ciudad {i + 1}: ")
+        ciudades.append(Ciudad(nombre_ciudad, nombre_pais))
+    return ciudades
+
+def encontrar_ciudades_mas_cercanas(ciudades, calculator):
+    distancias = [
+        (ciudades[0], ciudades[1], calculator.calculate_distance(ciudades[0], ciudades[1])),
+        (ciudades[0], ciudades[2], calculator.calculate_distance(ciudades[0], ciudades[2])),
+        (ciudades[1], ciudades[2], calculator.calculate_distance(ciudades[1], ciudades[2]))
+    ]
+
+    distancias_validas = [d for d in distancias if d[2] is not None]
+    if not distancias_validas:
+        return None, None, None
+
+    distancias_validas.sort(key=lambda x: x[2])
+    return distancias_validas[0]
 
 if __name__ == "__main__":
     # Ruta del archivo CSV
@@ -83,17 +105,11 @@ if __name__ == "__main__":
     else:
         print("Opcion invalida")
         exit()
+
+    ciudades = obtener_ciudades()
+    ciudad1, ciudad2, distancia = encontrar_ciudades_mas_cercanas(ciudades, calculator)
     
-    nombre_ciudad1 = input("Ingrese la primera ciudad: ")
-    nombre_pais1 = input("Ingrese el primer país: ")
-    nombre_ciudad2 = input("Ingrese la segunda ciudad: ")
-    nombre_pais2 = input("Ingrese el segundo país: ")
-
-    ciudad1 = Ciudad(nombre_ciudad1, nombre_pais1)
-    ciudad2 = Ciudad(nombre_ciudad2, nombre_pais2)
-
-    distancia = calculator.calculate_distance(ciudad1, ciudad2)
-    if distancia is not None:
-        print(f"La distancia entre {ciudad1.nombre_ciudad}, {ciudad1.nombre_pais} y {ciudad2.nombre_ciudad}, {ciudad2.nombre_pais} es {distancia:.2f} km.")
+    if ciudad1 and ciudad2 and distancia is not None:
+        print(f"Las ciudades más cercanas son {ciudad1.nombre_ciudad}, {ciudad1.nombre_pais} y {ciudad2.nombre_ciudad}, {ciudad2.nombre_pais} con una distancia de {distancia:.2f} km.")
     else:
-        print("No se pudieron obtener las coordenadas para una o ambas ciudades.")
+        print("No se pudieron obtener las coordenadas para una o más ciudades.")
